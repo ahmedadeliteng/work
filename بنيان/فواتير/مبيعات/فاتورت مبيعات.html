@@ -1,0 +1,210 @@
+<style>
+    .invoice-container {
+        direction: rtl;
+        text-align: right;
+        font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-size: 12px;
+        color: #000;
+        padding: 15px;
+        border: 3px solid #d32f2f; /* إطار خارجي باللون الأحمر */
+    }
+    
+    .header-table, .details-table, .items-table, .totals-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 10px;
+    }
+    
+    .header-title {
+        text-align: center;
+        font-weight: bold;
+    }
+    
+    .header-title h1 {
+        margin: 0;
+        font-size: 28px;
+        color: #d32f2f; /* لون كلمة بنيان بالأحمر */
+        text-shadow: 1px 1px 1px #ccc;
+    }
+
+    .header-title h3 {
+        margin: 2px 0;
+        font-size: 14px;
+        color: #1976d2; /* لون "شطب واحنا معاك" بالأزرق */
+    }
+    
+    .company-services {
+        font-size: 11px;
+        text-align: center;
+        margin: 8px 0;
+        background-color: #ffebee; /* خلفية حمراء خفيفة */
+        border-top: 2px solid #d32f2f;
+        border-bottom: 2px solid #d32f2f;
+        padding: 6px 0;
+        color: #b71c1c;
+        font-weight: bold;
+    }
+    
+    .items-table th, .items-table td,
+    .details-table td, .totals-table td {
+        border: 1px solid #444;
+        padding: 6px;
+        text-align: center;
+    }
+    
+    .items-table th {
+        background-color: #d32f2f !important; /* رؤوس جدول الأصناف باللون الأحمر */
+        color: #ffffff !important; /* النص باللون الأبيض */
+        font-weight: bold;
+        -webkit-print-color-adjust: exact;
+    }
+    
+    .totals-table td strong {
+        color: #d32f2f;
+    }
+    
+    .text-right { text-align: right !important; }
+    .text-left { text-align: left !important; }
+    
+    .notice-box {
+        border: 1px dashed #d32f2f;
+        background-color: #fffde7; /* خلفية صفراء خفيفة للتنبيه */
+        padding: 8px;
+        font-size: 10px;
+        margin-top: 10px;
+        text-align: center;
+        color: #333;
+        -webkit-print-color-adjust: exact;
+    }
+    
+    .brands-footer {
+        margin-top: 12px;
+        font-size: 10px;
+        text-align: center;
+        font-weight: bold;
+        color: #1976d2; /* ألوان الشعارات/الشركاء بالأزرق */
+        letter-spacing: 1px;
+    }
+    
+    /* أمر إجبار المتصفح على طباعة الألوان */
+    @media print {
+        * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+    }
+</style>
+
+<div class="invoice-container">
+    <!-- الهيدر والمعلومات الرئيسية -->
+    <table class="header-table">
+        <tr>
+            <td style="width: 35%; vertical-align: top;">
+                <strong>أرقام التواصل:</strong><br>
+                01070033318 - 01028040699<br><br>
+                <strong>العنوان:</strong><br>
+                بنيان مول - أمام نادي الخمائل<br>
+                كمباوند الخمائل - الشيخ زايد
+            </td>
+            <td style="width: 30%; vertical-align: top;" class="header-title">
+                <h1>بنيان</h1>
+                <h3>شطب وإحنا معاك</h3>
+                <h4 style="margin:5px 0; text-decoration: underline;">فاتورة مبيعات</h4>
+            </td>
+            <td style="width: 35%; vertical-align: top;" class="text-left">
+                <!-- مكان اللوجو إن وجد -->
+                {% if doc.company_logo %}
+                    <img src="{{ doc.company_logo }}" style="max-height: 70px;">
+                {% endif %}
+            </td>
+        </tr>
+    </table>
+
+    <div class="company-services">
+        أدوات صحية - دهانات - كهرباء - جبس بورد - تأجير عدد - حدايد - فيوتك - ديكورات - لوازم ستائر - أخشاب - منظفات - أسمنت - رمل
+    </div>
+
+    <!-- بيانات الفاتورة والعميل -->
+    <table class="details-table" style="margin-top: 10px;">
+        <tr>
+            <td class="text-right" style="width: 50%;"><strong>المطلوب من السيد / </strong> {{ doc.customer_name }}</td>
+            <td class="text-right" style="width: 50%;"><strong>رقم الفاتورة: </strong> {{ doc.name }}</td>
+        </tr>
+        <tr>
+            <td class="text-right"><strong>التاريخ: </strong> {{ doc.get_formatted("posting_date") }}</td>
+            <td class="text-right"><strong>الوقت: </strong> {{ doc.posting_time or '' }}</td>
+        </tr>
+        <tr>
+            <td class="text-right" colspan="2"><strong>طريقة الدفع: </strong> {{ doc.mode_of_payment or 'نقدي' }}</td>
+        </tr>
+    </table>
+
+    <!-- جدول المنتجات -->
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th style="width: 5%;">#</th>
+                <th style="width: 15%;">الكود</th>
+                <th style="width: 35%;">اسم الصنف</th>
+                <th style="width: 8%;">الكمية</th>
+                <th style="width: 8%;">الوحدة</th>
+                <th style="width: 10%;">سعر الوحدة</th>
+                <th style="width: 9%;">نسبة الخصم</th>
+                <th style="width: 10%;">الإجمالي</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in doc.items %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ item.item_code }}</td>
+                <td class="text-right">{{ item.item_name }}</td>
+                <td>{{ item.qty }}</td>
+                <td>{{ item.stock_uom or item.uom }}</td>
+                <td>{{ item.get_formatted("rate") }}</td>
+                <td>{{ item.discount_percentage or 0 }}%</td>
+                <td>{{ item.get_formatted("amount") }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- الحسابات والإجماليات -->
+    <table class="totals-table">
+        <tr>
+            <td class="text-right" style="width: 50%;"><strong>إجمالي الفاتورة:</strong></td>
+            <td class="text-left" style="width: 50%;">{{ doc.get_formatted("total") }}</td>
+        </tr>
+        <tr>
+            <td class="text-right"><strong>قيمة الخصم:</strong></td>
+            <td class="text-left">{{ doc.get_formatted("discount_amount") }}</td>
+        </tr>
+        <tr>
+            <td class="text-right"><strong>الصافي / إجمالي الحساب:</strong></td>
+            <td class="text-left"><strong>{{ doc.get_formatted("grand_total") }}</strong></td>
+        </tr>
+        <tr>
+            <td class="text-right"><strong>المدفوع:</strong></td>
+            <td class="text-left">{{ doc.get_formatted("paid_amount") }}</td>
+        </tr>
+        <tr>
+            <td class="text-right"><strong>الباقي:</strong></td>
+            <td class="text-left">{{ doc.get_formatted("outstanding_amount") }}</td>
+        </tr>
+        {% if doc.remarks %}
+        <tr>
+            <td class="text-right" colspan="2"><strong>الملاحظات: </strong> {{ doc.remarks }}</td>
+        </tr>
+        {% endif %}
+    </table>
+
+    <!-- الشروط والتنبيهات -->
+    <div class="notice-box">
+        <strong>عميلنا العزيز:</strong> الأسعار المذكورة بهذه الفاتورة سارية فقط في وقت إتمام عملية الشراء، وذلك لتقلبات السوق المستمرة وعدم استقرار الأسعار ولا يعتد بها في أي وقت لاحق.
+    </div>
+
+    <!-- أسماء الماركات أسفل الفاتورة -->
+    <div class="brands-footer">
+        JOTUN - GLC - CMB - السويدي إليكتريك - كتاوف - futec - ingco - VENUS - BR - Smart - Homs
+    </div>
+</div>
